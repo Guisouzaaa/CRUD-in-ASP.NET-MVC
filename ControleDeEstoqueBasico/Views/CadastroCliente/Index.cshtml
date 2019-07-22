@@ -1,0 +1,366 @@
+﻿@model ClienteViewModel
+
+
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<div class="container">
+    <div class="alert alert-success alert-dismissible fade show mt-4 mb-0 d-none" id="alerta" role="alert">
+        <p class="mb-0"></p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <button type="button" class="btn btn-success my-4 addNovoModal">Cadastrar novo cliente</button>
+    <table class="table table-bordered table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Telefone</th>
+                <th>Cidade</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="listaClientes"></tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="cadastroModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Cadastro cliente</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-danger text-center d-none" id="alertaErro">
+                    <h6>Preencha todos os campos.</h6>
+                </div>
+                <form method="post">
+                    <input asp-for="Cliente_Id" type="hidden" id="Cliente_Id" />
+                    <div class="form-group">
+                        <label asp-for="Nome"></label>
+                        <input asp-for="Nome" type="text" class="form-control input" id="Nome" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Telefone"></label>
+                        <input asp-for="Telefone" class="form-control input" id="Telefone" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" type="email" class="form-control input" id="Email" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="CEP"></label>
+                        <input asp-for="CEP" type="text" class="form-control input" id="CEP" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Bairro"></label>
+                        <input asp-for="Bairro" type="text" class="form-control input" id="Bairro" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Cidade"></label>
+                        <input asp-for="Cidade" type="text" class="form-control input" id="Cidade" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Estado"></label>
+                        <input asp-for="Estado" type="text" class="form-control input" id="Estado" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnAdd">Cadastrar cliente</button>
+                <button type="button" class="btn btn-primary" id="btnUpdate" style="display:none;">Salvar</button>
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Excluir cliente ?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Não</button>
+                <button type="submit" class="btn btn-success" id="submitYes">Sim</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+        $(document).ready(function () {
+            listarClientes();
+        });
+
+        //listar todos os produtos
+        function listarClientes() {
+            $.ajax({
+                url: '@Url.Action("ListarTodosClientes", "CadastroCliente")',
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (resultado) {
+                    console.log(resultado)
+                    let html = '';
+                    if (resultado == 0) {
+                        html += `
+                        <tr>
+                            <td colspan="5" class="text-center">Não há clientes cadastrados</td>
+                        </tr>
+                        `;
+                    } else {
+                        $.each(resultado, function (key, cliente) {
+                            html += '<tr>';
+                            html += '<td>' + cliente.nome + '</td>';
+                            html += '<td>' + cliente.email + '</td>';
+                            html += '<td>' + cliente.telefone + '</td>';
+                            html += '<td>' + cliente.cidade + '</td>';
+                            html +=
+                            `<td>
+                                <a href="#" class="btn btn-primary" id="editarModal" onclick="editarCliente(${cliente.cliente_Id})">Editar</a>
+                                <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarCliente(${cliente.cliente_Id})">Deletar</a>
+                            </td>
+                            </tr>
+                            `
+                        });
+                    }
+                    $("#listaClientes").html(html);
+                }
+            });
+        }
+
+        //Abrir modal para cadastro do produto
+        $(".addNovoModal").click(function () {
+            resetarCampos();
+            $("#cadastroModal").modal("show");
+            $("#tituloModal").html("Cadastrar cliente");
+            $('#btnUpdate').hide();
+            $('#btnAdd').show();
+        });
+
+        $("#btnAdd").click(function () {
+            if (validarForm() == false) {
+                return;
+            }
+
+            let cliente = {
+                Nome: $('#Nome').val(),
+                Descricao: $('#Email').val(),
+                Telefone: $('#Telefone').val(),
+                Email: $('#Email').val(),
+                CEP: $('#CEP').val(),
+                Bairro: $('#Bairro').val(),
+                Cidade: $('#Cidade').val(),
+                Estado: $('#Estado').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("CadastrarCliente", "CadastroCliente")',
+                type: "POST",
+                data: cliente,
+                headers: {
+                RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    $("#cadastroModal").modal("hide");
+
+                    listarClientes();
+                    ExibirAlerta("Cliente cadastrado");
+                }
+            });
+        });
+
+        // Abrir modal para editar produto
+        function editarCliente(id) {
+            resetarCampos();
+            $("#tituloModal").html("Editar cliente");
+
+            $.ajax({
+                url: '@Url.Action("ListarClientePeloId", "CadastroCliente")/' + id,
+                type: "GET",
+                contentType: "application/json",
+                dataType: "json",
+                success: function (cliente) {
+                    $('#Cliente_Id').val(cliente.cliente_Id);
+                    $('#Nome').val(cliente.nome);
+                    $('#Email').val(cliente.email);
+                    $('#Telefone').val(cliente.telefone);
+                    $('#Email').val(cliente.email);
+                    $('#CEP').val(cliente.cep);
+                    $('#Bairro').val(cliente.bairro);
+                    $('#Cidade').val(cliente.cidade);
+                    $('#Estado').val(cliente.estado);
+
+                    $("#cadastroModal").modal("show");
+                    $('#btnUpdate').show();
+                    $('#btnAdd').hide();
+
+                    listarClientes();
+                },
+                error: function() {
+                    alert("Não foi possível recuperar as informações do cliente");
+                }
+            });
+        }
+
+        $("#btnUpdate").click(function () {
+            if (validarForm() == false) {
+                return;
+            }
+
+            let cliente = {
+                Cliente_Id: $("#Cliente_Id").val(),
+                Nome: $('#Nome').val(),
+                Descricao: $('#Email').val(),
+                Telefone: $('#Telefone').val(),
+                Email: $('#Email').val(),
+                CEP: $('#CEP').val(),
+                Bairro: $('#Bairro').val(),
+                Cidade: $('#Cidade').val(),
+                Estado: $('#Estado').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("AtualizarCliente", "CadastroCliente")',
+                dataType: "json",
+                type: "POST",
+                data: cliente,
+                                headers: {
+                RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    ExibirAlerta("Cliente atualizado");
+
+                    $("#cadastroModal").modal("hide");
+                    resetarCampos();
+                    listarClientes();
+                },
+                error: function() {
+                    alert("Não foi possível atualizar o cliente");
+                }
+            });
+        });
+
+        // abrir modal para deletar produto
+        function deletarCliente(id) {
+                $("#deleteModal").modal("show");
+
+                $("#submitYes").click(function () {
+                    $.ajax({
+                        url: '@Url.Action("DeletarCliente", "CadastroCliente")/' + id,
+                        type: "POST",
+                        success: function (result) {
+                            ExibirAlerta("Cliente excluído");
+                            $("#deleteModal").modal("hide");
+
+                            listarClientes();
+                        },
+                    error: function() {
+                        alert("Erro ao excluir cliente");
+                        }
+                });
+            });
+        }
+
+        function ExibirAlerta(texto) {
+            $("#alerta").removeClass('d-none');
+            $("#alerta").addClass('d-block');
+            $("#alerta p").text(texto);
+
+            setTimeout(function () {
+                $("#alerta").removeClass('d-block');
+                $("#alerta").addClass('d-none');
+            }, 3000);
+        }
+
+        function resetarCampos() {
+            $("#alertaErro").removeClass('d-block');
+            $("#alertaErro").addClass('d-none');
+            $('#Nome').val("");
+            $('#Telefone').val("");
+            $('#Email').val("");
+            $('#CEP').val("");
+            $('#Bairro').val("");
+            $('#Cidade').val("");
+            $('#Estado').val("");
+            $('#Bairro').prop('disabled', false);
+            $('#Cidade').prop('disabled', false);
+            $('#Estado').prop('disabled', false);
+            let inputs = document.querySelectorAll('.input');
+
+            inputs.forEach(function (k, index) {
+                inputs[index].style.borderColor = 'lightgrey';
+            });
+        }
+
+        function validarForm() {
+            let inputs = document.querySelectorAll('.input');
+            let isValid = true;
+
+            inputs.forEach(function (k, index) {
+                if (inputs[index].value.trim() == "") {
+                    inputs[index].style.borderColor = 'red';
+                    $("#alertaErro").removeClass('d-none');
+                    $("#alertaErro").addClass('d-block');
+                    isValid = false;
+                } else {
+                    inputs[index].style.borderColor = 'lightgrey';
+                }
+            });
+            return isValid;
+        }
+
+        $("#CEP").blur(function () {
+            let cep = $("#CEP").val();
+
+            if (cep != "") {
+                $.ajax({
+                    url: 'https://viacep.com.br/ws/' + cep + '/json/',
+                    type: "GET",
+                    success: function (resposta) {
+                        $('#Bairro').prop('disabled', true);
+                        $('#Cidade').prop('disabled', true);
+                        $('#Estado').prop('disabled', true);
+
+                        $('#Bairro').val(resposta.bairro);
+                        $('#Cidade').val(resposta.localidade);
+                        $('#Estado').val(resposta.uf);
+                    },
+                    error: function () {
+                        alert("Cep inválido");
+                        $('#Bairro').prop('disabled', false);
+                        $('#Cidade').prop('disabled', false);
+                        $('#Estado').prop('disabled', false);
+
+                        $('#Bairro').val("");
+                        $('#Cidade').val("");
+                        $('#Estado').val("");
+                    }
+                });
+            }
+        })
+
+
+
+</script>
+
+
+

@@ -1,0 +1,306 @@
+﻿@model ProdutoViewModel
+
+@{
+    ViewData["Title"] = "Produtos";
+}
+
+<div class="container">
+    <div class="alert alert-success alert-dismissible fade show mt-4 mb-0 d-none" id="alerta" role="alert">
+        <p class="mb-0"></p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <button type="button" class="btn btn-success my-4 addNovoModal">Adicionar novo produto</button>
+    <table class="table table-bordered table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="listaProdutos"></tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="cadastroModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Adicionar Produto</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="text-danger text-center d-none" id="alertaErro">
+                    <h6>Preencha todos os campos.</h6>
+                </div>
+                <form method="post">
+                    <div class="form-group">
+                        <label asp-for="Prod_Id">ID</label>
+                        <input asp-for="Prod_Id" type="text" class="form-control" id="Prod_Id" disabled="disabled" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Nome">Nome</label>
+                        <input asp-for="Nome" type="text" class="form-control input" id="Nome" placeholder="Nome" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Descricao">Descrição</label>
+                        <textarea asp-for="Descricao" type="text" class="form-control input" id="Descricao" placeholder="Descrição"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Preco">Preço</label>
+                        <input asp-for="Preco" type="number" class="form-control input" id="Preco" placeholder="Preço" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnAdd">Adicionar produto</button>
+                <button type="button" class="btn btn-primary" id="btnUpdate" style="display:none;">Salvar</button>
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Deletar produto?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Não</button>
+                <button type="submit" class="btn btn-success" id="submitYes">Sim</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <script>
+        // carregar produtos
+        $(document).ready(function () {
+            listarProdutos();
+        });
+
+        //listar todos os produtos
+        function listarProdutos() {
+            let url = '@Url.Action("ListarTodosProdutos", "CadastroProduto")';
+            $.ajax({
+                url: url,
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                success: function (resultado) {
+                    let html = '';
+                    if (resultado == 0) {
+                        html += `
+                        <tr>
+                            <td colspan="4" class="text-center">Não há produtos na lista</td>
+                        </tr>
+                        `;
+                    } else {
+                        $.each(resultado, function (key, produto) {
+                            html += '<tr>';
+                            html += '<td>' + produto.prod_Id + '</td>';
+                            html += '<td>' + produto.nome + '</td>';
+                            html += '<td>' + produto.preco + '</td>';
+                            html +=
+                            `<td>
+                                <a href="#" class="btn btn-primary" id="editarModal" onclick="editarProduto(${produto.prod_Id})">Editar</a>
+                                <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarProduto(${produto.prod_Id})">Deletar</a>
+                            </td>
+                            </tr>
+                            `
+                        });
+                    }
+                    $("#listaProdutos").html(html);
+                }
+            });
+        }
+
+
+
+        //Abrir modal para cadastro do produto
+        $(".addNovoModal").click(function () {
+            limparCampos();
+            $("#cadastroModal").modal("show");
+            $("#tituloModal").html("Adicionar produto");
+            $('#btnUpdate').hide();
+            $('#btnAdd').show();
+        });
+
+        $("#btnAdd").click(function () {
+            if (validarForm() == false) {
+                return;
+            }
+
+            let url = '@Url.Action("CadastrarProduto", "CadastroProduto")';
+            let produto = {
+                Nome: $('#Nome').val(),
+                Descricao: $('#Descricao').val(),
+                Preco: $('#Preco').val()
+            };
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: produto,
+                                headers: {
+                RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    $("#cadastroModal").modal("hide");
+
+                    listarProdutos();
+                    ExibirAlerta("Produto adicionado com sucesso");
+                }
+            });
+        });
+
+        // Abrir modal para editar produto
+        function editarProduto(id) {
+            limparCampos();
+            $("#tituloModal").html("Editar produto");
+            let url = '@Url.Action("ListarProdutoPeloId", "CadastroProduto")/' + id;
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                contentType: "application/json",
+                dataType: "json",
+                success: function (result) {
+                    $("#Prod_Id").val(result.prod_Id);
+                    $("#Nome").val(result.nome);
+                    $("#Descricao").val(result.descricao);
+                    $("#Preco").val(result.preco);
+
+                    $("#cadastroModal").modal("show");
+                    $('#btnUpdate').show();
+                    $('#btnAdd').hide();
+
+                    listarProdutos();
+                },
+                error: function() {
+                    alert("Não foi possível recuperar as informações do produto");
+                }
+            });
+        }
+
+        $("#btnUpdate").click(function () {
+            if (validarForm() == false) {
+                return;
+            }
+
+            let url = '@Url.Action("EditarProduto", "CadastroProduto")';
+            let produto = {
+                Prod_Id: $('#Prod_Id').val(),
+                Nome: $('#Nome').val(),
+                Descricao: $('#Descricao').val(),
+                Preco: $('#Preco').val()
+            };
+
+            $.ajax({
+                url: url,
+                dataType: "json",
+                type: "POST",
+                data: produto,
+                                headers: {
+                RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function () {
+                    ExibirAlerta("Produto atualizado com sucesso");
+
+                    $("#cadastroModal").modal("hide");
+                    limparCampos();
+                    listarProdutos();
+                },
+                error: function() {
+                    alert("Não foi possível atualizar o produto");
+                }
+            });
+        });
+
+        // abrir modal para deletar produto
+        function deletarProduto(id) {
+                $("#deleteModal").modal("show");
+                 let url = '@Url.Action("DeletarProduto", "CadastroProduto")/' + id;
+
+                $("#submitYes").click(function () {
+                    $.ajax({
+                        url: url,
+                        type: "POST",
+                        success: function (result) {
+                            ExibirAlerta("Produto excluído");
+                            $("#deleteModal").modal("hide");
+
+                            listarProdutos();
+                        },
+                    error: function() {
+                        alert("Erro ao excluir produto");
+                        }
+                });
+            });
+        }
+
+        function ExibirAlerta(texto) {
+            $("#alerta").removeClass('d-none');
+            $("#alerta").addClass('d-block');
+            $("#alerta p").text(texto);
+
+            setTimeout(function () {
+                $("#alerta").removeClass('d-block');
+                $("#alerta").addClass('d-none');
+            }, 3000);
+        }
+
+
+        function limparCampos() {
+            $("#alertaErro").removeClass('d-block');
+            $("#alertaErro").addClass('d-none');
+            $("#Prod_Id").val("");
+            $("#Nome").val("");
+            $("#Descricao").val("");
+            $("#Preco").val("");
+            let inputs = document.querySelectorAll('.input');
+
+            inputs.forEach(function (k, index) {
+                inputs[index].style.borderColor = 'lightgrey';
+            });
+        }
+
+
+
+        function validarForm() {
+            let inputs = document.querySelectorAll('.input');
+            let isValid = true;
+
+            inputs.forEach(function (k, index) {
+                if (inputs[index].value.trim() == "") {
+                    inputs[index].style.borderColor = 'red';
+                    $("#alertaErro").removeClass('d-none');
+                    $("#alertaErro").addClass('d-block');
+                    isValid = false;
+                } else {
+                    inputs[index].style.borderColor = 'lightgrey';
+                }
+            });
+            return isValid;
+        }
+
+    </script>
+
+
+
+
