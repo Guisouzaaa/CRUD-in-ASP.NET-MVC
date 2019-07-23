@@ -17,6 +17,7 @@
     <table class="table table-bordered table-striped table-hover">
         <thead>
             <tr>
+                <th>Id</th>
                 <th>Nome</th>
                 <th>Email</th>
                 <th>Telefone</th>
@@ -110,7 +111,7 @@
             listarClientes();
         });
 
-        //listar todos os produtos
+        //listar todos os cliente
         function listarClientes() {
             $.ajax({
                 url: '@Url.Action("ListarTodosClientes", "CadastroCliente")',
@@ -118,28 +119,25 @@
                 contentType: "application/json;charset=utf-8",
                 dataType: "json",
                 success: function (resultado) {
-                    console.log(resultado)
                     let html = '';
                     if (resultado == 0) {
-                        html += `
-                        <tr>
+                        html += `<tr>
                             <td colspan="5" class="text-center">Não há clientes cadastrados</td>
                         </tr>
                         `;
                     } else {
                         $.each(resultado, function (key, cliente) {
-                            html += '<tr>';
-                            html += '<td>' + cliente.nome + '</td>';
-                            html += '<td>' + cliente.email + '</td>';
-                            html += '<td>' + cliente.telefone + '</td>';
-                            html += '<td>' + cliente.cidade + '</td>';
-                            html +=
-                            `<td>
+                            html += `<tr>
+                            <td>${cliente.cliente_Id}</td>
+                            <td>${cliente.nome}</td>
+                            <td>${cliente.email}</td>
+                            <td>${cliente.telefone}</td>
+                            <td>${cliente.cidade}</td>
+                            <td>
                                 <a href="#" class="btn btn-primary" id="editarModal" onclick="editarCliente(${cliente.cliente_Id})">Editar</a>
                                 <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarCliente(${cliente.cliente_Id})">Deletar</a>
                             </td>
-                            </tr>
-                            `
+                            </tr>`
                         });
                     }
                     $("#listaClientes").html(html);
@@ -147,7 +145,7 @@
             });
         }
 
-        //Abrir modal para cadastro do produto
+        //Abrir modal para cadastro do cliente
         $(".addNovoModal").click(function () {
             resetarCampos();
             $("#cadastroModal").modal("show");
@@ -188,7 +186,7 @@
             });
         });
 
-        // Abrir modal para editar produto
+        // Abrir modal para editar cliente
         function editarCliente(id) {
             resetarCampos();
             $("#tituloModal").html("Editar cliente");
@@ -243,7 +241,7 @@
                 dataType: "json",
                 type: "POST",
                 data: cliente,
-                                headers: {
+                headers: {
                 RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
                 },
                 success: function () {
@@ -259,7 +257,7 @@
             });
         });
 
-        // abrir modal para deletar produto
+        // abrir modal para deletar cliente
         function deletarCliente(id) {
                 $("#deleteModal").modal("show");
 
@@ -328,37 +326,35 @@
             return isValid;
         }
 
-        $("#CEP").blur(function () {
-            let cep = $("#CEP").val();
+    $("#CEP").blur(function () {
+        let cep = $("#CEP").val();
 
-            if (cep != "") {
-                $.ajax({
-                    url: 'https://viacep.com.br/ws/' + cep + '/json/',
-                    type: "GET",
-                    success: function (resposta) {
-                        $('#Bairro').prop('disabled', true);
-                        $('#Cidade').prop('disabled', true);
-                        $('#Estado').prop('disabled', true);
+        if (cep != "") {
+            $.ajax({
+                url: 'https://viacep.com.br/ws/' + cep + '/json/',
+                type: "GET",
+                success: function (resposta) {
+                    $('#Bairro').prop('disabled', true);
+                    $('#Cidade').prop('disabled', true);
+                    $('#Estado').prop('disabled', true);
 
-                        $('#Bairro').val(resposta.bairro);
-                        $('#Cidade').val(resposta.localidade);
-                        $('#Estado').val(resposta.uf);
-                    },
-                    error: function () {
-                        alert("Cep inválido");
-                        $('#Bairro').prop('disabled', false);
-                        $('#Cidade').prop('disabled', false);
-                        $('#Estado').prop('disabled', false);
+                    $('#Bairro').val(resposta.bairro);
+                    $('#Cidade').val(resposta.localidade);
+                    $('#Estado').val(resposta.uf);
+                },
+                error: function () {
+                    alert("Cep inválido");
+                    $('#Bairro').prop('disabled', false);
+                    $('#Cidade').prop('disabled', false);
+                    $('#Estado').prop('disabled', false);
 
-                        $('#Bairro').val("");
-                        $('#Cidade').val("");
-                        $('#Estado').val("");
-                    }
-                });
-            }
-        })
-
-
+                    $('#Bairro').val("");
+                    $('#Cidade').val("");
+                    $('#Estado').val("");
+                }
+            });
+        }
+    });
 
 </script>
 

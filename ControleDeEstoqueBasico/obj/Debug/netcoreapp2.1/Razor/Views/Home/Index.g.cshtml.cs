@@ -79,7 +79,7 @@ using CRUDControleDeEstoque.Models.ViewModels;
             WriteLiteral("        ");
             EndContext();
             BeginContext(188, 88, false);
-            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "a4734bb778714d928e592baeff54d997", async() => {
+            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "5170483fbf3743769910ca141bdb25a1", async() => {
                 BeginContext(267, 5, true);
                 WriteLiteral("Login");
                 EndContext();
