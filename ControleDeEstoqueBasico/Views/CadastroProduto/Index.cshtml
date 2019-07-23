@@ -96,34 +96,41 @@
 
         //listar todos os produtos
         function listarProdutos() {
+            let url = '@Url.Action("ListarTodosProdutos", "CadastroProduto")';
             $.ajax({
-                url: '@Url.Action("ListarTodosProdutos", "CadastroProduto")',
+                url: url,
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "json",
                 success: function (resultado) {
                     let html = '';
                     if (resultado == 0) {
-                        html += `<tr>
+                        html += `
+                        <tr>
                             <td colspan="4" class="text-center">Não há produtos na lista</td>
-                        </tr>`;
+                        </tr>
+                        `;
                     } else {
                         $.each(resultado, function (key, produto) {
-                            html += `<tr>
-                            <td>${produto.prod_Id}</td>
-                            <td>${produto.nome}</td>
-                            <td>${produto.preco}</td>
-                            <td>
+                            html += '<tr>';
+                            html += '<td>' + produto.prod_Id + '</td>';
+                            html += '<td>' + produto.nome + '</td>';
+                            html += '<td>' + produto.preco + '</td>';
+                            html +=
+                            `<td>
                                 <a href="#" class="btn btn-primary" id="editarModal" onclick="editarProduto(${produto.prod_Id})">Editar</a>
                                 <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarProduto(${produto.prod_Id})">Deletar</a>
                             </td>
-                            </tr>`
+                            </tr>
+                            `
                         });
                     }
                     $("#listaProdutos").html(html);
                 }
             });
         }
+
+
 
         //Abrir modal para cadastro do produto
         $(".addNovoModal").click(function () {
@@ -138,6 +145,8 @@
             if (validarForm() == false) {
                 return;
             }
+
+            let url = '@Url.Action("CadastrarProduto", "CadastroProduto")';
             let produto = {
                 Nome: $('#Nome').val(),
                 Descricao: $('#Descricao').val(),
@@ -145,14 +154,15 @@
             };
 
             $.ajax({
-                url: '@Url.Action("CadastrarProduto", "CadastroProduto")',
+                url: url,
                 type: "POST",
                 data: produto,
-                headers: {
+                                headers: {
                 RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
                 },
                 success: function () {
                     $("#cadastroModal").modal("hide");
+
                     listarProdutos();
                     ExibirAlerta("Produto adicionado com sucesso");
                 }
@@ -163,9 +173,10 @@
         function editarProduto(id) {
             limparCampos();
             $("#tituloModal").html("Editar produto");
+            let url = '@Url.Action("ListarProdutoPeloId", "CadastroProduto")/' + id;
 
             $.ajax({
-                url: '@Url.Action("ListarProdutoPeloId", "CadastroProduto")/' + id,
+                url: url,
                 type: "GET",
                 contentType: "application/json",
                 dataType: "json",
@@ -192,6 +203,7 @@
                 return;
             }
 
+            let url = '@Url.Action("EditarProduto", "CadastroProduto")';
             let produto = {
                 Prod_Id: $('#Prod_Id').val(),
                 Nome: $('#Nome').val(),
@@ -200,15 +212,16 @@
             };
 
             $.ajax({
-                url: '@Url.Action("EditarProduto", "CadastroProduto")',
+                url: url,
                 dataType: "json",
                 type: "POST",
                 data: produto,
-                headers: {
+                                headers: {
                 RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
                 },
                 success: function () {
                     ExibirAlerta("Produto atualizado com sucesso");
+
                     $("#cadastroModal").modal("hide");
                     limparCampos();
                     listarProdutos();
@@ -222,9 +235,11 @@
         // abrir modal para deletar produto
         function deletarProduto(id) {
                 $("#deleteModal").modal("show");
+                 let url = '@Url.Action("DeletarProduto", "CadastroProduto")/' + id;
+
                 $("#submitYes").click(function () {
                     $.ajax({
-                        url: '@Url.Action("DeletarProduto", "CadastroProduto")/' + id,
+                        url: url,
                         type: "POST",
                         success: function (result) {
                             ExibirAlerta("Produto excluído");
