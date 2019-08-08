@@ -111,22 +111,22 @@
             listarClientes();
         });
 
-        //listar todos os cliente
+        //listar todos os clientes
         function listarClientes() {
             $.ajax({
                 url: '@Url.Action("ListarTodosClientes", "CadastroCliente")',
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "json",
-                success: function (resultado) {
+                success: function (res) {
                     let html = '';
-                    if (resultado == 0) {
+                    if (res == 0) {
                         html += `<tr>
-                            <td colspan="5" class="text-center">Não há clientes cadastrados</td>
+                            <td colspan="6" class="text-center">Não há clientes cadastrados</td>
                         </tr>
                         `;
                     } else {
-                        $.each(resultado, function (key, cliente) {
+                        $.each(res, function (i, cliente) {
                             html += `<tr>
                             <td>${cliente.cliente_Id}</td>
                             <td>${cliente.nome}</td>
@@ -134,8 +134,8 @@
                             <td>${cliente.telefone}</td>
                             <td>${cliente.cidade}</td>
                             <td>
-                                <a href="#" class="btn btn-primary" id="editarModal" onclick="editarCliente(${cliente.cliente_Id})">Editar</a>
-                                <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarCliente(${cliente.cliente_Id})">Deletar</a>
+                                <a href="#" class="btn btn-primary" id="editarModal" data-id="${cliente.cliente_Id}">Editar</a>
+                                <a href="#" class="btn btn-danger" id="deletarModal" data-id="${cliente.cliente_Id}">Deletar</a>
                             </td>
                             </tr>`
                         });
@@ -187,8 +187,10 @@
         });
 
         // Abrir modal para editar cliente
-        function editarCliente(id) {
+        $(document).on("click", "#editarModal", function () {
             resetarCampos();
+            let id = $(this).data("id");
+
             $("#tituloModal").html("Editar cliente");
 
             $.ajax({
@@ -213,11 +215,11 @@
 
                     listarClientes();
                 },
-                error: function() {
+                error: function () {
                     alert("Não foi possível recuperar as informações do cliente");
                 }
             });
-        }
+        });
 
         $("#btnUpdate").click(function () {
             if (validarForm() == false) {
@@ -258,25 +260,27 @@
         });
 
         // abrir modal para deletar cliente
-        function deletarCliente(id) {
-                $("#deleteModal").modal("show");
+        $(document).on("click", "#deletarModal", function () {
+            let id = $(this).data("id");
 
-                $("#submitYes").click(function () {
-                    $.ajax({
-                        url: '@Url.Action("DeletarCliente", "CadastroCliente")/' + id,
-                        type: "POST",
-                        success: function (result) {
-                            ExibirAlerta("Cliente excluído");
-                            $("#deleteModal").modal("hide");
+            $("#deleteModal").modal("show");
 
-                            listarClientes();
-                        },
-                    error: function() {
+            $("#submitYes").click(function () {
+                $.ajax({
+                    url: '@Url.Action("DeletarCliente", "CadastroCliente")/' + id,
+                    type: "POST",
+                    success: function () {
+                        ExibirAlerta("Cliente excluído");
+                        $("#deleteModal").modal("hide");
+
+                        listarClientes();
+                    },
+                    error: function () {
                         alert("Erro ao excluir cliente");
-                        }
+                    }
                 });
             });
-        }
+        });
 
         function ExibirAlerta(texto) {
             $("#alerta").removeClass('d-none');
@@ -287,7 +291,7 @@
                 $("#alerta").removeClass('d-block');
                 $("#alerta").addClass('d-none');
             }, 3000);
-        }
+        };
 
         function resetarCampos() {
             $("#alertaErro").removeClass('d-block');
@@ -326,36 +330,35 @@
             return isValid;
         }
 
-    $("#CEP").blur(function () {
-        let cep = $("#CEP").val();
+        $("#CEP").blur(function () {
+            let cep = $("#CEP").val();
 
-        if (cep != "") {
-            $.ajax({
-                url: 'https://viacep.com.br/ws/' + cep + '/json/',
-                type: "GET",
-                success: function (resposta) {
-                    $('#Bairro').prop('disabled', true);
-                    $('#Cidade').prop('disabled', true);
-                    $('#Estado').prop('disabled', true);
+            if (cep != "") {
+                $.ajax({
+                    url: 'https://viacep.com.br/ws/' + cep + '/json/',
+                    type: "GET",
+                    success: function (resposta) {
+                        $('#Bairro').prop('disabled', true);
+                        $('#Cidade').prop('disabled', true);
+                        $('#Estado').prop('disabled', true);
 
-                    $('#Bairro').val(resposta.bairro);
-                    $('#Cidade').val(resposta.localidade);
-                    $('#Estado').val(resposta.uf);
-                },
-                error: function () {
-                    alert("Cep inválido");
-                    $('#Bairro').prop('disabled', false);
-                    $('#Cidade').prop('disabled', false);
-                    $('#Estado').prop('disabled', false);
+                        $('#Bairro').val(resposta.bairro);
+                        $('#Cidade').val(resposta.localidade);
+                        $('#Estado').val(resposta.uf);
+                    },
+                    error: function () {
+                        alert("Cep inválido");
+                        $('#Bairro').prop('disabled', false);
+                        $('#Cidade').prop('disabled', false);
+                        $('#Estado').prop('disabled', false);
 
-                    $('#Bairro').val("");
-                    $('#Cidade').val("");
-                    $('#Estado').val("");
-                }
-            });
-        }
-    });
-
+                        $('#Bairro').val("");
+                        $('#Cidade').val("");
+                        $('#Estado').val("");
+                    }
+                });
+            }
+        });
 </script>
 
 

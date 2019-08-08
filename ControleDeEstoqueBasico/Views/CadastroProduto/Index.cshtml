@@ -88,7 +88,7 @@
 </div>
 
 
-    <script>
+<script>
         // carregar produtos
         $(document).ready(function () {
             listarProdutos();
@@ -101,21 +101,21 @@
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "json",
-                success: function (resultado) {
+                success: function (res) {
                     let html = '';
-                    if (resultado == 0) {
+                    if (res == 0) {
                         html += `<tr>
                             <td colspan="4" class="text-center">Não há produtos na lista</td>
                         </tr>`;
                     } else {
-                        $.each(resultado, function (key, produto) {
+                        $.each(res, function (i, produto) {
                             html += `<tr>
                             <td>${produto.prod_Id}</td>
                             <td>${produto.nome}</td>
                             <td>${produto.preco}</td>
                             <td>
-                                <a href="#" class="btn btn-primary" id="editarModal" onclick="editarProduto(${produto.prod_Id})">Editar</a>
-                                <a href="#" class="btn btn-danger" id="deletarModal" onclick="deletarProduto(${produto.prod_Id})">Deletar</a>
+                                <button class="btn btn-primary" id="editarModal" data-id="${produto.prod_Id}">Editar</button>
+                                <button class="btn btn-danger" id="deletarModal" data-id="${produto.prod_Id}">Deletar</button>
                             </td>
                             </tr>`
                         });
@@ -160,20 +160,22 @@
         });
 
         // Abrir modal para editar produto
-        function editarProduto(id) {
+        $(document).on("click", "#editarModal", function () {
             limparCampos();
             $("#tituloModal").html("Editar produto");
+
+            let id = $(this).data("id");
 
             $.ajax({
                 url: '@Url.Action("ListarProdutoPeloId", "CadastroProduto")/' + id,
                 type: "GET",
                 contentType: "application/json",
                 dataType: "json",
-                success: function (result) {
-                    $("#Prod_Id").val(result.prod_Id);
-                    $("#Nome").val(result.nome);
-                    $("#Descricao").val(result.descricao);
-                    $("#Preco").val(result.preco);
+                success: function (res) {
+                    $("#Prod_Id").val(res.prod_Id);
+                    $("#Nome").val(res.nome);
+                    $("#Descricao").val(res.descricao);
+                    $("#Preco").val(res.preco);
 
                     $("#cadastroModal").modal("show");
                     $('#btnUpdate').show();
@@ -185,7 +187,7 @@
                     alert("Não foi possível recuperar as informações do produto");
                 }
             });
-        }
+        });
 
         $("#btnUpdate").click(function () {
             if (validarForm() == false) {
@@ -220,24 +222,27 @@
         });
 
         // abrir modal para deletar produto
-        function deletarProduto(id) {
-                $("#deleteModal").modal("show");
-                $("#submitYes").click(function () {
-                    $.ajax({
-                        url: '@Url.Action("DeletarProduto", "CadastroProduto")/' + id,
-                        type: "POST",
-                        success: function (result) {
-                            ExibirAlerta("Produto excluído");
-                            $("#deleteModal").modal("hide");
+        $(document).on("click", "#deletarModal", function () {
+            let id = $(this).data("id");
 
-                            listarProdutos();
-                        },
-                    error: function() {
-                        alert("Erro ao excluir produto");
-                        }
+            $("#deleteModal").modal("show");
+            $("#submitYes").click(function () {
+                $.ajax({
+                url: '@Url.Action("DeletarProduto", "CadastroProduto")/' + id,
+                type: "POST",
+                success: function () {
+                    ExibirAlerta("Produto excluído");
+                    $("#deleteModal").modal("hide");
+
+                    listarProdutos();
+                },
+                error: function () {
+                alert("Erro ao excluir produto");
+                    }
                 });
             });
-        }
+        });
+
 
         function ExibirAlerta(texto) {
             $("#alerta").removeClass('d-none');
@@ -284,7 +289,7 @@
             return isValid;
         }
 
-    </script>
+</script>
 
 
 

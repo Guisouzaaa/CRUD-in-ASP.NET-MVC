@@ -36,8 +36,8 @@ namespace CRUDControleDeEstoque.Controllers
                 if (usuario != null)
                 {
                     await signInManager.SignOutAsync();
-                    var resultado = await signInManager.PasswordSignInAsync(usuario, conta.Senha, false, false);
-                    if (resultado.Succeeded)
+                    var res = await signInManager.PasswordSignInAsync(usuario, conta.Senha, false, false);
+                    if (res.Succeeded)
                     {
                         return Redirect(returnUrl ?? "/");
                     }
@@ -83,8 +83,8 @@ namespace CRUDControleDeEstoque.Controllers
                     };
                     if(usuario != null)
                     {
-                        var resultado = await userManager.CreateAsync(usuario, uvm.Senha);
-                        if (resultado.Succeeded)
+                        var res = await userManager.CreateAsync(usuario, uvm.Senha);
+                        if (res.Succeeded)
                         {
                             return RedirectToAction("Index", "Home");
                         }
